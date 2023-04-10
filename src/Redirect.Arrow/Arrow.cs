@@ -132,6 +132,10 @@ public class Arrow
         return this;
     }
 
+    /// <summary>
+    /// The request map for the target pointed at <see cref="From(string)"/>or <see cref="From(Uri)"/>.
+    /// </summary>
+    /// <returns>The <see cref="ResponseMap"/> up to the final redirection.</returns>
     public async Task<ResponseMap> BuildAsync()
     {
         using var handler = new HttpClientHandler
