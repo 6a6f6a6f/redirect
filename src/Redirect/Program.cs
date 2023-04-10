@@ -1,45 +1,115 @@
-﻿using Redirect.Arrow;
+﻿var uriArgument = new Argument<string>("uri") {Description = "Target URI to check for redirects"};
 
-var responseMap = await Arrow.From("https://bit.ly/3GwTc8i")
-    .WithHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:10.0.2) Gecko/20100101 Firefox/10.0.2")
-    .WithTimeout(TimeSpan.FromSeconds(5))
-    .BuildAsync();
-
-var currentMap = responseMap;
-while (currentMap != null)
+var timeoutOption = new Option<int>(new[] {"-t", "--timeout"}, () => 5)
 {
-    Console.WriteLine($"Source URL: {currentMap.SourceUri}");
-    Console.WriteLine($"Destination URL: {currentMap.DestinationUri}");
-    Console.WriteLine($"Response Time: {currentMap.ResponseTime}");
-    Console.WriteLine($"Status Code: {currentMap.StatusCode}");
+    Description = "Timeout duration in seconds",
+    ArgumentHelpName = "count",
+    IsRequired = true
+};
 
-    if (currentMap.Headers.Count > 0)
+var maxRedirectOption = new Option<int>(new[] {"-m", "--max-redirect"}, () => 5)
+{
+    Description = "Maximum number of redirects to follow",
+    ArgumentHelpName = "count",
+    IsRequired = true
+};
+
+var proxyOption = new Option<string>(new[] {"-p", "--proxy"})
+{
+    Description = "Proxy to use for the request",
+    ArgumentHelpName = "host:port"
+};
+
+var headersOption = new Option<string[]>(new[] {"-h", "--header"})
+{
+    Description = "Custom header to add to the request",
+    ArgumentHelpName = "name:value"
+};
+
+var ignoreCertErrorsOption = new Option<bool>(new[] {"-i", "--ignore-certificate-errors"}, () => true)
+{
+    Description = "Ignore HTTPS-related certificate errors"
+};
+
+var rootCommand = new RootCommand("A simple tool to check redirect chain information on shortened URLs.")
+{
+    uriArgument,
+    timeoutOption,
+    headersOption,
+    maxRedirectOption,
+    proxyOption,
+    ignoreCertErrorsOption
+};
+
+rootCommand.Name = "redirect";
+rootCommand.SetHandler(context =>
+{
+    var uri = context.ParseResult.GetValueForArgument(uriArgument);
+    var timeout = context.ParseResult.GetValueForOption(timeoutOption);
+    var maxRedirect = context.ParseResult.GetValueForOption(maxRedirectOption);
+    var proxy = context.ParseResult.GetValueForOption(proxyOption);
+    var ignoreCertErrors = context.ParseResult.GetValueForOption(ignoreCertErrorsOption);
+    var headers = context.ParseResult.GetValueForOption(headersOption);
+    
+    if (!Uri.TryCreate(uri, UriKind.Absolute, out var parsedUri))
     {
-        Console.WriteLine("Headers:");
-        foreach (var header in currentMap.Headers)
-        {
-            Console.WriteLine($"  {header.Key}: {header.Value}");
-        }
+        Logger.LogError("Invalid URI specified.");
+        context.ExitCode = 1;
+        return;
+    }
+    
+    if (parsedUri.Scheme is not ("http" or "https"))
+    {
+        Logger.LogError("Invalid URI scheme specified. Only HTTP and HTTPS are supported.");
+        context.ExitCode = 1;
+        return;
     }
 
-    if (currentMap.Cookies.Count > 0)
+    if (timeout < 1)
     {
-        Console.WriteLine("Cookies:");
-        foreach (var cookie in currentMap.Cookies)
-        {
-            Console.WriteLine($"  {cookie.Name}: {cookie.Value}");
-        }
+        Logger.LogError("Timeout must be at least 1 second.");
+        context.ExitCode = 1;
+        return;
     }
 
-    if (currentMap.QueryParameters.Count > 0)
+    if (!string.IsNullOrEmpty(proxy) && !proxy.Contains(':') && proxy.Split(':').Length != 2)
     {
-        Console.WriteLine("Query Parameters:");
-        foreach (var parameter in currentMap.QueryParameters)
-        {
-            Console.WriteLine($"  {parameter.Key}: {parameter.Value}");
-        }
+        Logger.LogError("Invalid proxy specified. Must be in the format of host:port.");
+        context.ExitCode = 1;
+        return;
     }
 
-    Console.WriteLine(new string('-', 40));
-    currentMap = currentMap.NextRedirect;
-}
+    var parsedHeaders = new Dictionary<string, string>();
+    headers?.ToList().ForEach(header =>
+    {
+        var split = header.Split(':');
+        if (split.Length != 2)
+        {
+            Logger.LogError($"Invalid header specified: {header}. Must be in the format of name:value.");
+            context.ExitCode = 1;
+            return;
+        }
+        
+        parsedHeaders.Add(split[0], split[1]);
+    });
+    
+    var settings = new CommandSettings(uri)
+    {
+        Timeout = TimeSpan.FromSeconds(timeout),
+        MaxRedirects = maxRedirect,
+        Proxy = proxy ?? string.Empty,
+        IgnoreCertificateErrors = ignoreCertErrors,
+        Headers = parsedHeaders
+    };
+});
+
+new CommandLineBuilder(rootCommand).UseDefaults()
+    .UseHelp(context => context.HelpBuilder.CustomizeLayout(_ => HelpBuilder.Default.GetLayout().Skip(1)
+        .Prepend(_ =>
+        {
+            AnsiConsole.MarkupLine("[bold #00ff9f] __ _  _| o __ _  _ _|_[/]");
+            AnsiConsole.MarkupLine("[bold #00ff9f] | (/_(_| | | (/_(_  |_[/]");
+        })))
+    .UseExceptionHandler((exception, _) => Logger.LogException("An unexpected error occurred.", exception))
+    .Build()
+    .InvokeAsync(args);
