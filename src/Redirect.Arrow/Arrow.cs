@@ -136,21 +136,20 @@ public class Arrow
     /// The request map for the target pointed at <see cref="From(string)"/>or <see cref="From(Uri)"/>.
     /// </summary>
     /// <returns>The <see cref="ResponseMap"/> up to the final redirection.</returns>
-    public async Task<ResponseMap> BuildAsync()
+    public async Task<ResponseMap> ShootAsync(CancellationToken cancellationToken = default)
     {
-        using var handler = new HttpClientHandler
-        {
-            AllowAutoRedirect = false,
-            CookieContainer = _cookieContainer,
-            Proxy = _webProxy,
-        };
+        using var handler = new HttpClientHandler();
+        handler.AllowAutoRedirect = false;
+        handler.CookieContainer = _cookieContainer;
+        handler.Proxy = _webProxy;
 
         if (_certValidationCallback is not null)
         {
             handler.ServerCertificateCustomValidationCallback = _certValidationCallback!;
         }
 
-        using var client = new HttpClient(handler) {Timeout = _timeout};
+        using var client = new HttpClient(handler);
+        client.Timeout = _timeout;
         foreach (var (key, value) in _headers) client.DefaultRequestHeaders.Add(key, value);
 
         var currentUri = _target;
@@ -162,7 +161,7 @@ public class Arrow
         while (redirectCount < _maxRedirects)
         {
             var stopwatch = Stopwatch.StartNew();
-            var response = await client.GetAsync(currentUri);
+            var response = await client.GetAsync(currentUri, cancellationToken);
             stopwatch.Stop();
 
             if (response.IsRedirect())
@@ -186,7 +185,7 @@ public class Arrow
                     ResponseTime = stopwatch.Elapsed
                 };
 
-                if (previousResultMap != null)
+                if (previousResultMap is not null)
                 {
                     previousResultMap.NextRedirect = newResultMap;
                 }
@@ -200,16 +199,16 @@ public class Arrow
             }
             else
             {
-                resultMap.Headers = response.Headers.ToDictionary(h => h.Key, h =>
-                    string.Join(", ", h.Value));
+                resultMap.Headers = response.Headers.ToDictionary(h => h.Key, h => string.Join(", ", h.Value));
                 resultMap.Cookies = _cookieContainer.GetCookies(currentUri!).ToList();
                 resultMap.QueryParameters = currentUri!.ParseQueryString();
                 resultMap.StatusCode = response.StatusCode;
                 resultMap.ResponseTime = stopwatch.Elapsed;
+
                 break;
             }
         }
-        
+
         return resultMap;
     }
 

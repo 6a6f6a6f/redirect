@@ -93,7 +93,7 @@ rootCommand.SetHandler(context =>
         parsedHeaders.Add(split[0], split[1]);
     });
     
-    var settings = new CommandSettings(uri)
+    var settings = new CommandSettings(parsedUri)
     {
         Timeout = TimeSpan.FromSeconds(timeout),
         MaxRedirects = maxRedirect,
@@ -101,9 +101,29 @@ rootCommand.SetHandler(context =>
         IgnoreCertificateErrors = ignoreCertErrors,
         Headers = parsedHeaders
     };
+
+    var arrow = Arrow
+        .From(settings.Target)
+        .WithMaxRedirects(settings.MaxRedirects)
+        .WithTimeout(settings.Timeout);
+    
+    if (!string.IsNullOrEmpty(settings.Proxy)) arrow.WithProxy(new WebProxy(settings.Proxy));
+    if (settings.IgnoreCertificateErrors) arrow.WithCertificateValidationCallback((_, _, _, _) => true);
+    
+    settings.Headers.ToList().ForEach(header => arrow.WithHeader(header.Key, header.Value));
+    
+    var token = new CancellationTokenSource().Token;
+    
+    Logger.LogInfo($"Shooting the arrow at {settings.Target}...");
+    var task = arrow.ShootAsync(token);
+    task.Wait(token);
+    
+    Logger.LogSuccess("The arrow landed! Here's what we found: ");
+    var result = task.Result;
+    Logger.Map(result);
 });
 
-new CommandLineBuilder(rootCommand).UseDefaults()
+await new CommandLineBuilder(rootCommand).UseDefaults()
     .UseHelp(context => context.HelpBuilder.CustomizeLayout(_ => HelpBuilder.Default.GetLayout().Skip(1)
         .Prepend(_ =>
         {

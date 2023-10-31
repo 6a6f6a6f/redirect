@@ -1,6 +1,6 @@
 ﻿namespace Redirect.Settings;
 
-public record CommandSettings(string Target)
+public record CommandSettings(Uri Target)
 {
     public required TimeSpan Timeout { get; init; }
     public required int MaxRedirects { get; init; }
