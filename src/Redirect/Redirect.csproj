@@ -6,9 +6,15 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
+    
+    <PropertyGroup>
+        <PackAsTool>true</PackAsTool>
+        <ToolCommandName>redirect</ToolCommandName>
+        <PackageOutputPath>./nupkg</PackageOutputPath>
+    </PropertyGroup>
+    
     <ItemGroup>
-      <ProjectReference Include="..\Redirect.Arrow\Redirect.Arrow.csproj" />
+        <ProjectReference Include="..\Redirect.Arrow\Redirect.Arrow.csproj" />
     </ItemGroup>
 
     <ItemGroup>
