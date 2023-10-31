@@ -12,6 +12,21 @@
         <ToolCommandName>redirect</ToolCommandName>
         <PackageOutputPath>./nupkg</PackageOutputPath>
     </PropertyGroup>
+
+    <PropertyGroup>
+        <PackageId>Redirect</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>6a6f6a6f</Authors>
+        <Description>Simple CLI tool that follow redirects.</Description>
+        <PackageProjectUrl>https://github.com/6a6f6a6f/redirect</PackageProjectUrl>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="README.md"/>
+    </ItemGroup>
     
     <ItemGroup>
         <ProjectReference Include="..\Redirect.Arrow\Redirect.Arrow.csproj" />
