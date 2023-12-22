@@ -53,7 +53,7 @@ internal static class Logger
         node.AddNode($"Response Time: [green]{map.ResponseTime.TotalMilliseconds} ms[/]");
         node.AddNode($"Status Code: [green]{(int) map.StatusCode} [dim]({map.StatusCode})[/][/]");
 
-        if (map.Headers.Any())
+        if (map.Headers.Count > 0)
         {
             var headersNode = node.AddNode("Headers: ");
             foreach (var header in map.Headers)
@@ -62,7 +62,7 @@ internal static class Logger
             }
         }
 
-        if (map.Cookies.Any())
+        if (map.Cookies.Count > 0)
         {
             var cookiesNode = node.AddNode("Cookies: ");
             foreach (var cookie in map.Cookies)
@@ -71,14 +71,15 @@ internal static class Logger
             }
         }
 
-        if (map.QueryParameters.Any())
+        if (map.QueryParameters.Count > 0)
         {
             var queryParamsNode = node.AddNode("Query Parameters: ");
             foreach (var queryParameter in map.QueryParameters)
             {
+                var value = string.Join(", ", queryParameter.Value);
                 queryParamsNode.AddNode(
                     $"[bold]{Markup.Escape(queryParameter.Key)}[/]: " + 
-                    $"{string.Join(", ", Markup.Escape(queryParameter.Value.ToString() ?? string.Empty))}");
+                    $"{string.Join(", ", Markup.Escape(value))}");
             }
         }
 

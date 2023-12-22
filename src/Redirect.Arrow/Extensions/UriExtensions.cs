@@ -13,7 +13,7 @@ internal static class UriExtensions
         foreach (string key in queryParameters.Keys)
         {
             if (string.IsNullOrEmpty(key)) continue;
-            if (!parameters.ContainsKey(key)) parameters.Add(key, new List<string>());
+            if (!parameters.ContainsKey(key)) parameters.Add(key, []);
 
             var entity = queryParameters[key];
             if (string.IsNullOrEmpty(entity)) continue;
