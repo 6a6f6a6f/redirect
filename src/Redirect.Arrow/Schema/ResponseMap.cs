@@ -16,7 +16,7 @@ public record ResponseMap(Uri SourceUri, Uri? DestinationUri = default)
     /// <summary>
     /// Gets the collection of cookies added during the redirection process.
     /// </summary>
-    public List<Cookie> Cookies { get; set; } = new();
+    public List<Cookie> Cookies { get; set; } = [];
     
     /// <summary>
     /// Gets the dictionary of query parameters added during the redirection process.

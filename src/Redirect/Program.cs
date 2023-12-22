@@ -1,32 +1,32 @@
 ﻿var uriArgument = new Argument<string>("uri") {Description = "Target URI to check for redirects"};
 
-var timeoutOption = new Option<int>(new[] {"-t", "--timeout"}, () => 5)
+var timeoutOption = new Option<int>(["-t", "--timeout"], () => 5)
 {
     Description = "Timeout duration in seconds",
     ArgumentHelpName = "count",
     IsRequired = true
 };
 
-var maxRedirectOption = new Option<int>(new[] {"-m", "--max-redirect"}, () => 5)
+var maxRedirectOption = new Option<int>(["-m", "--max-redirect"], () => 5)
 {
     Description = "Maximum number of redirects to follow",
     ArgumentHelpName = "count",
     IsRequired = true
 };
 
-var proxyOption = new Option<string>(new[] {"-p", "--proxy"})
+var proxyOption = new Option<string>(["-p", "--proxy"])
 {
     Description = "Proxy to use for the request",
     ArgumentHelpName = "host:port"
 };
 
-var headersOption = new Option<string[]>(new[] {"-h", "--header"})
+var headersOption = new Option<string[]>(["-h", "--header"])
 {
     Description = "Custom header to add to the request",
     ArgumentHelpName = "name:value"
 };
 
-var ignoreCertErrorsOption = new Option<bool>(new[] {"-i", "--ignore-certificate-errors"}, () => true)
+var ignoreCertErrorsOption = new Option<bool>(["-i", "--ignore-certificate-errors"], () => true)
 {
     Description = "Ignore HTTPS-related certificate errors"
 };
